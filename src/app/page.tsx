@@ -5,9 +5,10 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+//import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Bell, Settings } from "lucide-react"
+import { useTheme } from "next-themes" // Importar el hook useTheme
 
 interface StationData {
   hour: number;
@@ -19,6 +20,7 @@ interface StationsData {
 }
 
 export default function SubwayDashboard() {
+  const { theme, setTheme } = useTheme(); // Usar el hook useTheme
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
   const [stationsData, setStationsData] = useState<StationsData>({})
   const [lineData, setLineData] = useState<StationData[]>([])
@@ -83,6 +85,10 @@ export default function SubwayDashboard() {
     }
   }
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark"); // Cambiar entre modo oscuro y claro
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <nav className="bg-primary text-primary-foreground p-4">
@@ -91,7 +97,7 @@ export default function SubwayDashboard() {
           <div className="flex space-x-4">
             <Button variant="ghost" onClick={() => setActiveTab("dashboard")}>Dashboard</Button>
             <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Alertas</Button>
-            <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Historial</Button>
+            <Button variant="ghost" onClick={() => setActiveTab("history")}>Historial</Button>
             <Button variant="ghost" onClick={() => setActiveTab("settings")}>Ajustes</Button>
           </div>
         </div>
@@ -178,7 +184,7 @@ export default function SubwayDashboard() {
                 </ChartContainer>
               </CardContent>
             </Card>
-
+            
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>Tráfico general de la línea</CardTitle>
@@ -239,7 +245,9 @@ export default function SubwayDashboard() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Modo Oscuro</span>
-                  <Button variant="outline">Cambiar</Button>
+                  <Button variant="outline" onClick={toggleTheme}>
+                    {theme === "dark" ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+                  </Button>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Notificaciones</span>
@@ -263,8 +271,6 @@ export default function SubwayDashboard() {
             </CardContent>
           </Card>
         )}
-
-        
       </main>
     </div>
   )
