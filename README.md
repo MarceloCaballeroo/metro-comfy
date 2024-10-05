@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Metro Comfy
 
-## Getting Started
+Metro Comfy es un proyecto de dashboard para monitorear el tráfico de pasajeros en el sistema de metro. Utiliza Next.js y varias bibliotecas modernas para ofrecer una experiencia de usuario fluida y atractiva.
 
-First, run the development server:
+## Características
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Visualización en tiempo real del tráfico de pasajeros.
+- Simulación de datos para pruebas.
+- Notificaciones de alertas.
+- Interfaz de usuario responsiva y amigable.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Requisitos Previos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Asegúrate de tener instalado lo siguiente en tu máquina:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Node.js](https://nodejs.org/) (versión 14 o superior)
+- [npm](https://www.npmjs.com/) o [yarn](https://yarnpkg.com/)
 
-## Learn More
+## Instalación
 
-To learn more about Next.js, take a look at the following resources:
+1. Clona el repositorio:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   git clone https://github.com/tu_usuario/metro-comfy.git
+   cd metro-comfy
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Instala las dependencias:
 
-## Deploy on Vercel
+   ```bash
+   npm install
+   # o
+   yarn install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Ejecución
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Para iniciar el servidor de desarrollo, ejecuta:
+
+
+Abre tu navegador y visita [http://localhost:3000](http://localhost:3000) para ver la aplicación en acción.
+
+## Uso
+
+- **Dashboard**: Visualiza el tráfico de pasajeros en tiempo real.
+- **Alertas**: Recibe notificaciones sobre eventos importantes.
+- **Historial**: Consulta datos históricos de tráfico.
+- **Configuración**: Ajusta las preferencias de la aplicación, como el modo oscuro y la tasa de actualización de datos.
+
+## Contribuciones
+
+Las contribuciones son bienvenidas. Si deseas contribuir, por favor sigue estos pasos:
+
+1. Haz un fork del proyecto.
+2. Crea una nueva rama (`git checkout -b feature/nueva-caracteristica`).
+3. Realiza tus cambios y haz commit (`git commit -m 'Agrega nueva característica'`).
+4. Haz push a la rama (`git push origin feature/nueva-caracteristica`).
+5. Abre un Pull Request.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+## Recursos Adicionales
+
+- [Documentación de Next.js](https://nextjs.org/docs)
+- [React](https://reactjs.org/)
+- [Recharts](https://recharts.org/en-US/)
