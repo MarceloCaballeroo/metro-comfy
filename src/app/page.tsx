@@ -1,40 +1,45 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 
 export default function Component() {
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
   const [stationData, setStationData] = useState([])
   const [lineData, setLineData] = useState([])
   const [alertas, setAlertas] = useState([])
+  const [currentHour, setCurrentHour] = useState(6)
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
+  const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
+    wsRef.current = new WebSocket('ws://localhost:8080');
 
-    ws.onopen = () => {
+    wsRef.current.onopen = () => {
       console.log('Conectado al WebSocket');
     };
 
-    ws.onmessage = (event) => {
+    wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log('Datos recibidos:', data);
-      setLineData(data.estaciones.map(e => ({ hour: data.hora, passengers: e.pasajeros })));
+      setCurrentHour(data.hora);
+      setLineData(prevData => [...prevData, { hour: data.hora, passengers: data.totalLinea4A }]);
       const selectedStationData = data.estaciones.find(e => e.nombre === selectedStation);
       setStationData(selectedStationData ? selectedStationData.historial : []);
       setAlertas(data.alertas);
     };
 
-    ws.onerror = (error) => {
+    wsRef.current.onerror = (error) => {
       console.error('Error en WebSocket:', error);
     };
 
     return () => {
-      ws.close();
+      if (wsRef.current) wsRef.current.close();
     };
   }, [selectedStation]);
 
@@ -46,8 +51,32 @@ export default function Component() {
     return `${tickItem}:00`;
   }
 
+  const handleStartSimulation = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send('iniciar');
+      setIsSimulationRunning(true);
+      setLineData([]); // Limpiar datos anteriores
+    }
+  }
+
+  const handleStopSimulation = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send('detener');
+      setIsSimulationRunning(false);
+    }
+  }
+
   return (
     <div className="space-y-8 p-8">
+      <div>
+        <Button onClick={handleStartSimulation} disabled={isSimulationRunning}>
+          Iniciar Simulación
+        </Button>
+        <Button onClick={handleStopSimulation} disabled={!isSimulationRunning}>
+          Detener Simulación
+        </Button>
+      </div>
+
       {alertas.map((alerta, index) => (
         <Alert key={index} variant="destructive">
           <AlertTitle>Alerta</AlertTitle>
@@ -86,7 +115,7 @@ export default function Component() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={stationData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" tickFormatter={formatXAxis} />
+                <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} />
                 <YAxis domain={[0, 'dataMax + 10000']} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />
@@ -113,7 +142,7 @@ export default function Component() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={lineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" tickFormatter={formatXAxis} />
+                <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} />
                 <YAxis domain={[0, 'dataMax + 10000']} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />
