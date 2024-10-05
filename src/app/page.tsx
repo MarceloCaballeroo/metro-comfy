@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Bell } from "lucide-react" // Settings, Calendar
+import { Bell, AlertTriangle } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Toast } from "@/components/ui/toast"
 
 interface StationData {
   hour: number;
@@ -19,17 +20,24 @@ interface StationsData {
   [key: string]: StationData[];
 }
 
+interface Alert {
+  id: string;
+  message: string;
+  acknowledged: boolean;
+}
+
 export default function SubwayDashboard() {
   const { theme, setTheme } = useTheme();
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
   const [stationsData, setStationsData] = useState<StationsData>({})
   const [lineData, setLineData] = useState<StationData[]>([])
-  const [alertas, setAlertas] = useState<string[]>([])
+  const [alerts, setAlerts] = useState<Alert[]>([])
   const [isSimulationRunning, setIsSimulationRunning] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
   const [globalCount, setGlobalCount] = useState(0)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [showToast, setShowToast] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
@@ -50,7 +58,11 @@ export default function SubwayDashboard() {
         });
         return newData;
       });
-      setAlertas(data.alertas);
+      setAlerts(data.alertas.map((alerta: string, index: number) => ({
+        id: `alert-${index}`,
+        message: alerta,
+        acknowledged: false
+      })));
       setGlobalCount(data.totalLinea4A);
     };
 
@@ -96,14 +108,29 @@ export default function SubwayDashboard() {
     setTheme(theme === "dark" ? "light" : "dark");
   }
 
+  const acknowledgeAlert = (id: string) => {
+    setAlerts(prevAlerts => prevAlerts.map(alert => 
+      alert.id === id ? { ...alert, acknowledged: true } : alert
+    ));
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <nav className="bg-primary text-primary-foreground p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Metro Comfy</h1>
-          <div className="flex space-x-4">
+        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+          <h1 className="text-2xl font-bold mb-4 sm:mb-0">Metro Comfy</h1>
+          <div className="flex flex-wrap justify-center sm:justify-end space-x-2 sm:space-x-4">
             <Button variant="ghost" onClick={() => setActiveTab("dashboard")}>Dashboard</Button>
-            <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Alertas</Button>
+            <Button variant="ghost" onClick={() => setActiveTab("alerts")} className="relative">
+              Alertas
+              {alerts.length > 0 && (
+                <span className="absolute top-0 right-0 -mt-1 -mr-1 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                  {alerts.length}
+                </span>
+              )}
+            </Button>
             <Button variant="ghost" onClick={() => setActiveTab("history")}>Historial</Button>
             <Button variant="ghost" onClick={() => setActiveTab("settings")}>Ajustes</Button>
           </div>
@@ -113,7 +140,7 @@ export default function SubwayDashboard() {
       <main className="flex-grow container mx-auto p-4">
         <Card className="mb-8">
           <CardContent className="flex justify-center items-center p-6">
-            <h2 className="text-6xl font-bold">
+            <h2 className="text-4xl sm:text-6xl font-bold">
               {currentTime.toLocaleTimeString()}
             </h2>
           </CardContent>
@@ -121,7 +148,7 @@ export default function SubwayDashboard() {
 
         {activeTab === "dashboard" && (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Pasajeros globales</CardTitle>
@@ -144,7 +171,7 @@ export default function SubwayDashboard() {
               ))}
             </div>
 
-            <div>
+            <div className="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
               <Button onClick={handleStartSimulation} disabled={isSimulationRunning}>
                 Iniciar Simulación
               </Button>
@@ -160,7 +187,7 @@ export default function SubwayDashboard() {
               <CardContent>
                 <div className="mb-4">
                   <Select onValueChange={handleStationChange} value={selectedStation}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Seleccionar estación" />
                     </SelectTrigger>
                     <SelectContent>
@@ -179,7 +206,7 @@ export default function SubwayDashboard() {
                       color: "hsl(var(--chart-1))",
                     },
                   }}
-                  className="h-[400px]"
+                  className="h-[300px] sm:h-[400px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -212,7 +239,7 @@ export default function SubwayDashboard() {
                       color: "hsl(var(--chart-2))",
                     },
                   }}
-                  className="h-[400px]"
+                  className="h-[300px] sm:h-[400px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={lineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -230,20 +257,27 @@ export default function SubwayDashboard() {
         )}
 
         {activeTab === "alerts" && (
-          <Card className={alertas.length > 0 ? "bg-red-100 dark:bg-red-900" : ""}>
+          <Card className={alerts.length > 0 ? "bg-yellow-100 dark:bg-yellow-900" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Bell className={`mr-2 ${alertas.length > 0 ? "text-red-500" : ""}`} />
+                <AlertTriangle className={`mr-2 ${alerts.length > 0 ? "text-yellow-500" : ""}`} />
                 Alertas
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {alertas.length > 0 ? (
-                  alertas.map((alerta, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Bell className="text-red-500" />
-                      <p>{alerta}</p>
+                {alerts.length > 0 ? (
+                  alerts.map((alert) => (
+                    <div key={alert.id} className="flex items-center justify-between space-x-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow">
+                      <div className="flex items-center space-x-2">
+                        <Bell className="text-yellow-500" />
+                        <p>{alert.message}</p>
+                      </div>
+                      {!alert.acknowledged && (
+                        <Button onClick={() => acknowledgeAlert(alert.id)}>
+                          Reconocer
+                        </Button>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -268,7 +302,7 @@ export default function SubwayDashboard() {
                   className="rounded-md border"
                 />
                 {selectedDate && (
-                  <Card>
+                  <Card className="w-full">
                     <CardHeader>
                       <CardTitle>Datos para {selectedDate.toLocaleDateString()}</CardTitle>
                     </CardHeader>
@@ -303,7 +337,7 @@ export default function SubwayDashboard() {
                 <div className="flex items-center justify-between">
                   <span>Tasa de actualización de datos</span>
                   <Select defaultValue="5">
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Seleccionar tasa" />
                     </SelectTrigger>
                     <SelectContent>
@@ -325,6 +359,12 @@ export default function SubwayDashboard() {
           <p>&copy; 2024 Metro Comfy. Todos los derechos reservados.</p>
         </div>
       </footer>
+
+      {showToast && (
+        <Toast>
+          <p>Reporte enviado</p>
+        </Toast>
+      )}
     </div>
   )
 }
