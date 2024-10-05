@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 
 export default function Component() {
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
-  const [stationData, setStationData] = useState([])
+  const [stationsData, setStationsData] = useState({})
   const [lineData, setLineData] = useState([])
   const [alertas, setAlertas] = useState([])
   const [currentHour, setCurrentHour] = useState(6)
@@ -29,8 +29,13 @@ export default function Component() {
       console.log('Datos recibidos:', data);
       setCurrentHour(data.hora);
       setLineData(prevData => [...prevData, { hour: data.hora, passengers: data.totalLinea4A }]);
-      const selectedStationData = data.estaciones.find(e => e.nombre === selectedStation);
-      setStationData(selectedStationData ? selectedStationData.historial : []);
+      setStationsData(prevData => {
+        const newData = { ...prevData };
+        data.estaciones.forEach(estacion => {
+          newData[estacion.nombre] = estacion.historial;
+        });
+        return newData;
+      });
       setAlertas(data.alertas);
     };
 
@@ -41,7 +46,7 @@ export default function Component() {
     return () => {
       if (wsRef.current) wsRef.current.close();
     };
-  }, [selectedStation]);
+  }, []);
 
   const handleStationChange = (value: string) => {
     setSelectedStation(value);
@@ -56,6 +61,7 @@ export default function Component() {
       wsRef.current.send('iniciar');
       setIsSimulationRunning(true);
       setLineData([]); // Limpiar datos anteriores
+      setStationsData({}); // Limpiar datos de estaciones
     }
   }
 
@@ -113,7 +119,7 @@ export default function Component() {
             className="h-[400px]"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stationData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} />
                 <YAxis domain={[0, 'dataMax + 10000']} />
