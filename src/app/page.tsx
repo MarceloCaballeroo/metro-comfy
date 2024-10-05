@@ -87,11 +87,12 @@ export default function SubwayDashboard() {
     <div className="flex flex-col min-h-screen">
       <nav className="bg-primary text-primary-foreground p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Subway Traffic Dashboard</h1>
+          <h1 className="text-2xl font-bold">Metro Comfy</h1>
           <div className="flex space-x-4">
             <Button variant="ghost" onClick={() => setActiveTab("dashboard")}>Dashboard</Button>
-            <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Alerts</Button>
-            <Button variant="ghost" onClick={() => setActiveTab("settings")}>Settings</Button>
+            <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Alertas</Button>
+            <Button variant="ghost" onClick={() => setActiveTab("alerts")}>Historial</Button>
+            <Button variant="ghost" onClick={() => setActiveTab("settings")}>Ajustes</Button>
           </div>
         </div>
       </nav>
@@ -102,7 +103,7 @@ export default function SubwayDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Global Passenger Count</CardTitle>
+                  <CardTitle>Pasajeros globales</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-4xl font-bold">{globalCount.toLocaleString()}</p>
@@ -130,14 +131,7 @@ export default function SubwayDashboard() {
                 Detener Simulación
               </Button>
             </div>
-
-            {alertas.map((alerta, index) => (
-              <Alert key={index} variant="destructive">
-                <AlertTitle>Alerta</AlertTitle>
-                <AlertDescription>{alerta}</AlertDescription>
-              </Alert>
-            ))}
-
+            
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>Tráfico por estación: {selectedStation}</CardTitle>
@@ -269,6 +263,8 @@ export default function SubwayDashboard() {
             </CardContent>
           </Card>
         )}
+
+        
       </main>
     </div>
   )
