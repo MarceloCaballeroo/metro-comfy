@@ -1,15 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    // ... otras configuraciones
     serverRuntimeConfig: {
-      // Variables de configuración del servidor
-      apiEndpoint: 'http://localhost:3001' // La URL de tu servidor
+      apiEndpoint: 'http://localhost:8080' // La URL de tu servidor
     },
     publicRuntimeConfig: {
-      // Variables de configuración accesibles desde el frontend
-      wsEndpoint: 'ws://localhost:8080' // La URL de tu servidor WebSocket
+      wsEndpoint: 'ws://localhost:8080', // La URL de tu servidor WebSocket
+      NEXT_PUBLIC_WS_ENDPOINT: 'ws://localhost:8080' // Asegúrate de que sea accesible desde el frontend
     },
-  }
-  
-  module.exports = nextConfig
+};
+
+// Exporta la configuración usando la sintaxis de ES
+export default nextConfig;

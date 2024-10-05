@@ -1,46 +1,72 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Mock data generation function
-const generateMockData = (baseValue: number) => {
-  return Array.from({ length: 18 }, (_, i) => {
-    const hour = i + 6
-    const passengers = Math.floor(baseValue + Math.random() * 100000 * Math.sin((hour - 6) / 17 * Math.PI))
-    return { hour: `${hour.toString().padStart(2, '0')}:00`, passengers }
-  })
-}
-
-const stations = ["La Cisterna", "San Ramon", "Santa Rosa", "La Granja", "Santa Julia", "Vicuña Mackenna"]
-const lineData = generateMockData(150000)
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function Component() {
-  const [selectedStation, setSelectedStation] = useState(stations[0])
-  const [stationData, setStationData] = useState(generateMockData(100000))
+  const [selectedStation, setSelectedStation] = useState("La Cisterna")
+  const [stationData, setStationData] = useState([])
+  const [lineData, setLineData] = useState([])
+  const [alertas, setAlertas] = useState([])
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onopen = () => {
+      console.log('Conectado al WebSocket');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Datos recibidos:', data);
+      setLineData(data.estaciones.map(e => ({ hour: data.hora, passengers: e.pasajeros })));
+      const selectedStationData = data.estaciones.find(e => e.nombre === selectedStation);
+      setStationData(selectedStationData ? selectedStationData.historial : []);
+      setAlertas(data.alertas);
+    };
+
+    ws.onerror = (error) => {
+      console.error('Error en WebSocket:', error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [selectedStation]);
 
   const handleStationChange = (value: string) => {
-    setSelectedStation(value)
-    setStationData(generateMockData(100000)) // Regenerate data for new station
+    setSelectedStation(value);
+  }
+
+  const formatXAxis = (tickItem: number) => {
+    return `${tickItem}:00`;
   }
 
   return (
     <div className="space-y-8 p-8">
+      {alertas.map((alerta, index) => (
+        <Alert key={index} variant="destructive">
+          <AlertTitle>Alerta</AlertTitle>
+          <AlertDescription>{alerta}</AlertDescription>
+        </Alert>
+      ))}
+
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Trafico por estacion</CardTitle>
+          <CardTitle>Tráfico por estación: {selectedStation}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
             <Select onValueChange={handleStationChange} value={selectedStation}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select station" />
+                <SelectValue placeholder="Seleccionar estación" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
+                {["La Cisterna", "San Ramón", "Santa Rosa", "La Granja", "Santa Julia", "Vicuña Mackenna"].map((station) => (
                   <SelectItem key={station} value={station}>
                     {station}
                   </SelectItem>
@@ -51,7 +77,7 @@ export default function Component() {
           <ChartContainer
             config={{
               passengers: {
-                label: "Passengers",
+                label: "Pasajeros",
                 color: "hsl(var(--chart-1))",
               },
             }}
@@ -60,8 +86,8 @@ export default function Component() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={stationData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis domain={[10000, 300000]} />
+                <XAxis dataKey="hour" tickFormatter={formatXAxis} />
+                <YAxis domain={[0, 'dataMax + 10000']} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />
               </LineChart>
@@ -72,13 +98,13 @@ export default function Component() {
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Trafico general de la lista</CardTitle>
+          <CardTitle>Tráfico general de la línea</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer
             config={{
               passengers: {
-                label: "Passengers",
+                label: "Pasajeros",
                 color: "hsl(var(--chart-2))",
               },
             }}
@@ -87,8 +113,8 @@ export default function Component() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={lineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis domain={[10000, 300000]} />
+                <XAxis dataKey="hour" tickFormatter={formatXAxis} />
+                <YAxis domain={[0, 'dataMax + 10000']} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />
               </LineChart>
