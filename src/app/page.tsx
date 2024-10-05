@@ -8,12 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
+interface StationData {
+  hour: number;
+  passengers: number;
+}
+
+interface StationsData {
+  [key: string]: StationData[];
+}
+
 export default function Component() {
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
-  const [stationsData, setStationsData] = useState({})
-  const [lineData, setLineData] = useState([])
-  const [alertas, setAlertas] = useState([])
-  const [currentHour, setCurrentHour] = useState(6)
+  const [stationsData, setStationsData] = useState<StationsData>({})
+  const [lineData, setLineData] = useState<StationData[]>([])
+  const [alertas, setAlertas] = useState<string[]>([])
   const [isSimulationRunning, setIsSimulationRunning] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
 
@@ -27,12 +35,11 @@ export default function Component() {
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log('Datos recibidos:', data);
-      setCurrentHour(data.hora);
-      setLineData(prevData => [...prevData, { hour: data.hora, passengers: data.totalLinea4A }]);
+      setLineData(prevData => [...prevData, { hour: data.hora, passengers: data.totalLinea4A }].slice(-18));
       setStationsData(prevData => {
-        const newData = { ...prevData };
-        data.estaciones.forEach(estacion => {
-          newData[estacion.nombre] = estacion.historial;
+        const newData: StationsData = { ...prevData };
+        data.estaciones.forEach((estacion: { nombre: string; historial: StationData[] }) => {
+          newData[estacion.nombre] = estacion.historial.filter((d: StationData) => d.hour >= 6 && d.hour <= 23);
         });
         return newData;
       });
@@ -121,7 +128,13 @@ export default function Component() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} />
+                <XAxis 
+                  dataKey="hour" 
+                  tickFormatter={formatXAxis} 
+                  domain={[6, 23]} 
+                  type="number"
+                  ticks={[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
+                />
                 <YAxis domain={[0, 'dataMax + 10000']} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />
