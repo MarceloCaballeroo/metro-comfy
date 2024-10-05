@@ -5,10 +5,10 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-//import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Bell, Settings } from "lucide-react"
-import { useTheme } from "next-themes" // Importar el hook useTheme
+import { Bell } from "lucide-react" // Settings, Calendar
+import { useTheme } from "next-themes"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 
 interface StationData {
   hour: number;
@@ -20,7 +20,7 @@ interface StationsData {
 }
 
 export default function SubwayDashboard() {
-  const { theme, setTheme } = useTheme(); // Usar el hook useTheme
+  const { theme, setTheme } = useTheme();
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
   const [stationsData, setStationsData] = useState<StationsData>({})
   const [lineData, setLineData] = useState<StationData[]>([])
@@ -28,6 +28,8 @@ export default function SubwayDashboard() {
   const [isSimulationRunning, setIsSimulationRunning] = useState(false)
   const [activeTab, setActiveTab] = useState("dashboard")
   const [globalCount, setGlobalCount] = useState(0)
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
@@ -56,8 +58,13 @@ export default function SubwayDashboard() {
       console.error('Error en WebSocket:', error);
     };
 
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
     return () => {
       if (wsRef.current) wsRef.current.close();
+      clearInterval(timer);
     };
   }, []);
 
@@ -73,8 +80,8 @@ export default function SubwayDashboard() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send('iniciar');
       setIsSimulationRunning(true);
-      setLineData([]); // Limpiar datos anteriores
-      setStationsData({}); // Limpiar datos de estaciones
+      setLineData([]);
+      setStationsData({});
     }
   }
 
@@ -86,7 +93,7 @@ export default function SubwayDashboard() {
   }
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark"); // Cambiar entre modo oscuro y claro
+    setTheme(theme === "dark" ? "light" : "dark");
   }
 
   return (
@@ -104,6 +111,14 @@ export default function SubwayDashboard() {
       </nav>
 
       <main className="flex-grow container mx-auto p-4">
+        <Card className="mb-8">
+          <CardContent className="flex justify-center items-center p-6">
+            <h2 className="text-6xl font-bold">
+              {currentTime.toLocaleTimeString()}
+            </h2>
+          </CardContent>
+        </Card>
+
         {activeTab === "dashboard" && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -215,9 +230,12 @@ export default function SubwayDashboard() {
         )}
 
         {activeTab === "alerts" && (
-          <Card>
+          <Card className={alertas.length > 0 ? "bg-red-100 dark:bg-red-900" : ""}>
             <CardHeader>
-              <CardTitle>Alertas</CardTitle>
+              <CardTitle className="flex items-center">
+                <Bell className={`mr-2 ${alertas.length > 0 ? "text-red-500" : ""}`} />
+                Alertas
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -230,6 +248,35 @@ export default function SubwayDashboard() {
                   ))
                 ) : (
                   <p>No hay alertas activas en este momento.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "history" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Historial</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center space-y-4">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+                {selectedDate && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Datos para {selectedDate.toLocaleDateString()}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Pasajeros totales: {Math.floor(Math.random() * 1000000).toLocaleString()}</p>
+                      <p>Alertas: {Math.floor(Math.random() * 10)}</p>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             </CardContent>
@@ -272,6 +319,12 @@ export default function SubwayDashboard() {
           </Card>
         )}
       </main>
+
+      <footer className="bg-primary text-primary-foreground p-4 mt-8">
+        <div className="container mx-auto text-center">
+          <p>&copy; 2024 Metro Comfy. Todos los derechos reservados.</p>
+        </div>
+      </footer>
     </div>
   )
 }
