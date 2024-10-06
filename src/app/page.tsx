@@ -10,7 +10,6 @@ import { Bell } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Toast, ToastProvider } from "@/components/ui/toast"
-import { saveStationData, saveLineData } from "@/lib/firestore"
 import AuthForm from "./auth-form"
 
 interface StationData {
@@ -88,7 +87,7 @@ export default function SubwayDashboard() {
       if (wsRef.current) wsRef.current.close();
       clearInterval(timer);
     };
-  }, [selectedStation, isAuthenticated]); // Se eliminaron saveStationData y saveLineData
+  }, [selectedStation, isAuthenticated]);
 
   const handleStationChange = (value: string) => {
     setSelectedStation(value);
@@ -244,13 +243,7 @@ export default function SubwayDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="hour"
-                          tickFormatter={formatXAxis}
-                          domain={[6, 23]}
-                          type="number"
-                          ticks={[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
-                        />
+                        <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} type="number" ticks={[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]} />
                         <YAxis domain={[0, 'dataMax + 10000']} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />

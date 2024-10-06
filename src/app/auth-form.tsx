@@ -6,10 +6,37 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { registerUser, loginUser } from "@/lib/auth"
 
 interface AuthFormProps {
     onAuthSuccess: () => void;
+}
+
+async function registerUser(email: string, password: string) {
+    const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+        throw new Error('Error al registrar usuario');
+    }
+    return response.json();
+}
+
+async function loginUser(email: string, password: string) {
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+        throw new Error('Error al iniciar sesión');
+    }
+    return response.json();
 }
 
 export default function AuthForm({ onAuthSuccess }: AuthFormProps) {
