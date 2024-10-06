@@ -39,7 +39,7 @@ export default function SubwayDashboard() {
   const [globalCount, setGlobalCount] = useState(0)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [showToast, setShowToast] = useState(false)
+  const [showToast] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [wsError, setWsError] = useState<string | null>(null)
@@ -88,7 +88,7 @@ export default function SubwayDashboard() {
       if (wsRef.current) wsRef.current.close();
       clearInterval(timer);
     };
-  }, [selectedStation, isAuthenticated, saveStationData, saveLineData]);
+  }, [selectedStation, isAuthenticated]); // Se eliminaron saveStationData y saveLineData
 
   const handleStationChange = (value: string) => {
     setSelectedStation(value);
