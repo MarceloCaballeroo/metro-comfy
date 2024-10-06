@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Bell, AlertTriangle } from "lucide-react"
+import { Bell } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Toast, ToastProvider } from "@/components/ui/toast"
+import { saveStationData, saveLineData } from "@/lib/firestore"
+import AuthForm from "./auth-form"
 
 interface StationData {
   hour: number;
@@ -39,8 +41,12 @@ export default function SubwayDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [showToast, setShowToast] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [wsError, setWsError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     wsRef.current = new WebSocket('ws://localhost:8080');
 
     wsRef.current.onopen = () => {
@@ -64,10 +70,14 @@ export default function SubwayDashboard() {
         acknowledged: false
       })));
       setGlobalCount(data.totalLinea4A);
+
+      saveStationData(selectedStation, { passengers: data.totalLinea4A });
+      saveLineData("L4A", { totalPassengers: data.totalLinea4A });
     };
 
     wsRef.current.onerror = (error) => {
       console.error('Error en WebSocket:', error);
+      setWsError('Error de conexión. Por favor, recarga la página.');
     };
 
     const timer = setInterval(() => {
@@ -78,7 +88,7 @@ export default function SubwayDashboard() {
       if (wsRef.current) wsRef.current.close();
       clearInterval(timer);
     };
-  }, []);
+  }, [selectedStation, isAuthenticated, saveStationData, saveLineData]);
 
   const handleStationChange = (value: string) => {
     setSelectedStation(value);
@@ -93,7 +103,6 @@ export default function SubwayDashboard() {
       wsRef.current.send('iniciar');
       setIsSimulationRunning(true);
       setLineData([]);
-      setStationsData({});
     }
   }
 
@@ -104,16 +113,32 @@ export default function SubwayDashboard() {
     }
   }
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  }
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+  }
+
+  const acknowledgeAlert = (id: string) => {
+    setAlerts(prevAlerts =>
+      prevAlerts.map(alert =>
+        alert.id === id ? { ...alert, acknowledged: true } : alert
+      )
+    );
+  }
+
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   }
 
-  const acknowledgeAlert = (id: string) => {
-    setAlerts(prevAlerts => prevAlerts.map(alert => 
-      alert.id === id ? { ...alert, acknowledged: true } : alert
-    ));
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+  if (!isAuthenticated) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <AuthForm onAuthSuccess={handleAuthSuccess} />
+      </div>
+    );
   }
 
   return (
@@ -139,6 +164,13 @@ export default function SubwayDashboard() {
         </nav>
 
         <main className="flex-grow container mx-auto p-4">
+          {wsError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <strong className="font-bold">Error:</strong>
+              <span className="block sm:inline"> {wsError}</span>
+            </div>
+          )}
+
           <Card className="mb-8">
             <CardContent className="flex justify-center items-center p-6">
               <h2 className="text-4xl sm:text-6xl font-bold">
@@ -180,7 +212,7 @@ export default function SubwayDashboard() {
                   Detener Simulación
                 </Button>
               </div>
-              
+
               <Card className="w-full">
                 <CardHeader>
                   <CardTitle>Tráfico por estación: {selectedStation}</CardTitle>
@@ -212,10 +244,10 @@ export default function SubwayDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="hour" 
-                          tickFormatter={formatXAxis} 
-                          domain={[6, 23]} 
+                        <XAxis
+                          dataKey="hour"
+                          tickFormatter={formatXAxis}
+                          domain={[6, 23]}
                           type="number"
                           ticks={[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
                         />
@@ -227,7 +259,7 @@ export default function SubwayDashboard() {
                   </ChartContainer>
                 </CardContent>
               </Card>
-              
+
               <Card className="w-full">
                 <CardHeader>
                   <CardTitle>Tráfico general de la línea</CardTitle>
@@ -258,12 +290,9 @@ export default function SubwayDashboard() {
           )}
 
           {activeTab === "alerts" && (
-            <Card className={alerts.length > 0 ? "bg-yellow-100 dark:bg-yellow-900" : ""}>
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <AlertTriangle className={`mr-2 ${alerts.length > 0 ? "text-yellow-500" : ""}`} />
-                  Alertas
-                </CardTitle>
+                <CardTitle>Alertas</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -332,39 +361,31 @@ export default function SubwayDashboard() {
                     </Button>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Notificaciones</span>
-                    <Button variant="outline">Configurar</Button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Tasa de actualización de datos</span>
-                    <Select defaultValue="5">
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Seleccionar tasa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Cada 1 minuto</SelectItem>
-                        <SelectItem value="5">Cada 5 minutos</SelectItem>
-                        <SelectItem value="15">Cada 15 minutos</SelectItem>
-                        <SelectItem value="30">Cada 30 minutos</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <span>Cerrar Sesión</span>
+                    <Button variant="outline" onClick={handleLogout}>
+                      Logout
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
         </main>
-
         <footer className="bg-primary text-primary-foreground p-4 mt-8">
           <div className="container mx-auto text-center">
             <p>&copy; 2024 Metro Comfy. Todos los derechos reservados.</p>
           </div>
         </footer>
-
         {showToast && (
           <Toast>
             <p>Reporte enviado</p>
           </Toast>
+        )}
+        {wsError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error:</strong>
+            <span className="block sm:inline"> {wsError}</span>
+          </div>
         )}
       </div>
     </ToastProvider>
