@@ -71,8 +71,15 @@ export default function SubwayDashboard() {
       })));
       setGlobalCount(data.totalLinea4A);
 
-      saveStationData(selectedStation, { passengers: data.totalLinea4A });
-      saveLineData("L4A", { totalPassengers: data.totalLinea4A });
+      // Aquí se envían los datos a Firestore
+      saveStationData(selectedStation, new Date().toISOString().split('T')[0], new Date().getHours().toString(), {
+        passengers: data.totalLinea4A,
+        alarms: [] // Aquí puedes agregar la lógica para obtener las alarmas si las tienes
+      });
+      saveLineData("L4A", new Date().toISOString().split('T')[0], new Date().getHours().toString(), {
+        totalPassengers: data.totalLinea4A,
+        alarms: [] // Aquí también puedes agregar la lógica para las alarmas
+      });
     };
 
     wsRef.current.onerror = (error) => {
@@ -88,7 +95,7 @@ export default function SubwayDashboard() {
       if (wsRef.current) wsRef.current.close();
       clearInterval(timer);
     };
-  }, [selectedStation, isAuthenticated]); // Se eliminaron saveStationData y saveLineData
+  }, [selectedStation, isAuthenticated]);
 
   const handleStationChange = (value: string) => {
     setSelectedStation(value);
@@ -112,7 +119,6 @@ export default function SubwayDashboard() {
       setIsSimulationRunning(false);
     }
   }
-
   const handleLogout = () => {
     setIsAuthenticated(false);
   }
