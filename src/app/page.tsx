@@ -43,6 +43,14 @@ export default function SubwayDashboard() {
   const wsRef = useRef<WebSocket | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [wsError, setWsError] = useState<string | null>(null)
+  const lastDate = useRef(new Date())
+
+  useEffect(() => {
+    const auth = localStorage.getItem('isAuthenticated');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -55,7 +63,13 @@ export default function SubwayDashboard() {
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const currentDate = new Date(data.fecha); // Usar la fecha proporcionada por el servidor
+      const currentDate = new Date(data.fecha);
+
+      // Verificar si es un nuevo día
+      if (currentDate.getDate() !== lastDate.current.getDate()) {
+        setLineData([]); // Reiniciar los datos del gráfico general
+        lastDate.current = currentDate;
+      }
 
       // Preparar datos de todas las estaciones
       const stationsData: StationsData = {};
