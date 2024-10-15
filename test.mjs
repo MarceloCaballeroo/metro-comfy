@@ -3,6 +3,7 @@ import { WebSocketServer } from 'ws';
 const wss = new WebSocketServer({ port: 8080 });
 
 let horaSimulada = 6; // Inicia la simulación a las 6:00 AM
+let fechaSimulada = new Date(); // Inicia la simulación con la fecha actual
 let intervalId = null;
 
 // Historial de datos por estación
@@ -103,6 +104,7 @@ function iniciarSimulacion(ws) {
   if (intervalId) clearInterval(intervalId);
   
   horaSimulada = 6; // Asegurarse de que siempre comience en 6:00 AM
+  fechaSimulada = new Date(); // Reiniciar la fecha al iniciar la simulación
   
   // Limpiar historial al iniciar
   Object.keys(historialEstaciones).forEach(estacion => {
@@ -125,7 +127,7 @@ function enviarDatos(ws) {
   actualizarHistorial(datosSimulados);
 
   const totalLinea4A = calcularTotalLinea4A(datosSimulados);
-
+  
   const alertas = [];
   
   datosSimulados.forEach(estacion => {
@@ -150,6 +152,7 @@ function enviarDatos(ws) {
   }));
 
   console.log('Datos enviados:', {
+    fecha: fechaSimulada.toISOString().split('T')[0], // Enviar la fecha en formato YYYY-MM-DD
     hora: horaSimulada,
     estaciones: datosConHistorial,
     totalLinea4A: totalLinea4A,
@@ -157,6 +160,7 @@ function enviarDatos(ws) {
   });
   
   ws.send(JSON.stringify({
+    fecha: fechaSimulada.toISOString().split('T')[0], // Enviar la fecha en formato YYYY-MM-DD
     hora: horaSimulada,
     estaciones: datosConHistorial,
     totalLinea4A: totalLinea4A,
