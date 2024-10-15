@@ -55,30 +55,49 @@ export default function SubwayDashboard() {
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log('Datos recibidos:', data);
-      setLineData(prevData => [...prevData, { hour: data.hora, passengers: data.totalLinea4A }].slice(-18));
-      setStationsData(prevData => {
-        const newData: StationsData = { ...prevData };
-        data.estaciones.forEach((estacion: { nombre: string; historial: StationData[] }) => {
-          newData[estacion.nombre] = estacion.historial.filter((d: StationData) => d.hour >= 6 && d.hour <= 23);
-        });
-        return newData;
-      });
+      const currentDate = new Date(data.fecha); // Usar la fecha proporcionada por el servidor
+
+      // Preparar datos de todas las estaciones
+      const stationsData: StationsData = {};
+      data.estaciones.forEach(
+        (estacion: { nombre: string; pasajeros: number; historial: StationData[] }) => {
+          stationsData[estacion.nombre] = estacion.historial;
+        }
+      );
+
+      // Actualizar el estado de las estaciones
+      setStationsData(stationsData);
+
+      // Actualizar el estado de las alertas
       setAlerts(data.alertas.map((alerta: string, index: number) => ({
         id: `alert-${index}`,
         message: alerta,
         acknowledged: false
       })));
+
+      // Actualizar el estado global de pasajeros
       setGlobalCount(data.totalLinea4A);
 
-      // Aquí se envían los datos a Firestore
-      saveStationData(selectedStation, new Date().toISOString().split('T')[0], new Date().getHours().toString(), {
+      // Guardar datos en Firestore
+      saveStationData(selectedStation, currentDate.toISOString().split('T')[0], data.hora.toString(), {
         passengers: data.totalLinea4A,
         alarms: [] // Aquí puedes agregar la lógica para obtener las alarmas si las tienes
       });
-      saveLineData("L4A", new Date().toISOString().split('T')[0], new Date().getHours().toString(), {
+      saveLineData("L4A", currentDate.toISOString().split('T')[0], data.hora.toString(), {
         totalPassengers: data.totalLinea4A,
         alarms: [] // Aquí también puedes agregar la lógica para las alarmas
+      });
+
+      // Actualizar la fecha y hora actual
+      setCurrentTime(currentDate);
+
+      // Actualizar lineData con los datos totales de la línea
+      setLineData(prevData => {
+        const newData = [...prevData, {
+          hour: data.hora,
+          passengers: data.totalLinea4A
+        }].slice(-24); // Mantener solo las últimas 24 horas de datos
+        return newData;
       });
     };
 
@@ -249,7 +268,7 @@ export default function SubwayDashboard() {
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stationsData[selectedStation] || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="none" />
                         <XAxis
                           dataKey="hour"
                           tickFormatter={formatXAxis}
@@ -283,7 +302,13 @@ export default function SubwayDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={lineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="hour" tickFormatter={formatXAxis} domain={[6, 23]} />
+                        <XAxis 
+                          dataKey="hour" 
+                          tickFormatter={formatXAxis} 
+                          domain={[6, 23]} 
+                          type="number"
+                          ticks={[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
+                        />
                         <YAxis domain={[0, 'dataMax + 10000']} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Line type="monotone" dataKey="passengers" stroke="var(--color-passengers)" strokeWidth={2} dot={false} />

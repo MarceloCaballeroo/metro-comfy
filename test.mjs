@@ -3,7 +3,7 @@ import { WebSocketServer } from 'ws';
 const wss = new WebSocketServer({ port: 8080 });
 
 let horaSimulada = 6; // Inicia la simulación a las 6:00 AM
-let fechaSimulada = new Date(); // Inicia la simulación con la fecha actual
+let fechaSimulada = new Date('2024-01-01');// Inicia la simulación con la fecha actual
 let intervalId = null;
 
 // Historial de datos por estación
@@ -100,28 +100,6 @@ function calcularTotalLinea4A(datos) {
   return datos.reduce((total, estacion) => total + estacion.pasajeros, 0);
 }
 
-function iniciarSimulacion(ws) {
-  if (intervalId) clearInterval(intervalId);
-  
-  horaSimulada = 6; // Asegurarse de que siempre comience en 6:00 AM
-  fechaSimulada = new Date(); // Reiniciar la fecha al iniciar la simulación
-  
-  // Limpiar historial al iniciar
-  Object.keys(historialEstaciones).forEach(estacion => {
-    historialEstaciones[estacion] = [];
-  });
-  
-  // Enviar datos iniciales inmediatamente
-  enviarDatos(ws);
-  
-  intervalId = setInterval(() => {
-    horaSimulada = (horaSimulada + 1) % 24; // Reiniciar a las 6:00 AM después de las 23:00
-    if (horaSimulada >= 6 && horaSimulada <= 23) {
-      enviarDatos(ws);
-    }
-  }, 5000); // 5 segundos = 1 hora simulada
-}
-
 function enviarDatos(ws) {
   const datosSimulados = generarPasajerosSimulados(horaSimulada);
   actualizarHistorial(datosSimulados);
@@ -151,21 +129,35 @@ function enviarDatos(ws) {
       .filter(dato => dato.hour >= 6 && dato.hour <= 23)
   }));
 
-  console.log('Datos enviados:', {
-    fecha: fechaSimulada.toISOString().split('T')[0], // Enviar la fecha en formato YYYY-MM-DD
-    hora: horaSimulada,
-    estaciones: datosConHistorial,
-    totalLinea4A: totalLinea4A,
-    alertas: alertas
-  });
-  
   ws.send(JSON.stringify({
-    fecha: fechaSimulada.toISOString().split('T')[0], // Enviar la fecha en formato YYYY-MM-DD
+    fecha: fechaSimulada.toISOString().split('T')[0],
     hora: horaSimulada,
     estaciones: datosConHistorial,
     totalLinea4A: totalLinea4A,
     alertas: alertas
   }));
+}
+
+function iniciarSimulacion(ws) {
+  if (intervalId) clearInterval(intervalId);
+  
+  horaSimulada = 6;
+  
+  Object.keys(historialEstaciones).forEach(estacion => {
+    historialEstaciones[estacion] = [];
+  });
+  
+  enviarDatos(ws);
+  
+  intervalId = setInterval(() => {
+    horaSimulada = (horaSimulada + 1) % 24;
+    if (horaSimulada === 0) {
+      fechaSimulada.setDate(fechaSimulada.getDate() + 1);
+    }
+    if (horaSimulada >= 6 && horaSimulada <= 23) {
+      enviarDatos(ws);
+    }
+  }, 5000);
 }
 
 function detenerSimulacion() {
