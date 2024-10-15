@@ -11,7 +11,7 @@ interface Alarm {
 
 interface StationData {
     passengers: number;
-    alarms: Alarm[];
+    alarms: string[];
 }
 
 interface LineData {
@@ -21,10 +21,11 @@ interface LineData {
 
 export const saveStationData = async (station: string, date: string, hour: string, data: StationData) => {
     try {
+        // Guardar datos horarios
         const stationDocRef = doc(db, "stations", station, "dates", date, "hours", hour);
         await setDoc(stationDocRef, data, { merge: true });
 
-        // Update or create aggregated data
+        // Actualizar o crear datos agregados
         const aggregatedDocRef = doc(db, "stations", station, "aggregated", date);
         const aggregatedDoc = await getDoc(aggregatedDocRef);
 
@@ -39,6 +40,8 @@ export const saveStationData = async (station: string, date: string, hour: strin
                 totalAlarms: data.alarms.length
             });
         }
+
+        console.log(`Datos guardados para la estación ${station} en la fecha ${date} y hora ${hour}`);
     } catch (error) {
         console.error("Error al guardar datos de la estación:", error);
         throw new Error(`No se pudieron guardar los datos de la estación: ${error instanceof Error ? error.message : 'Error desconocido'}`);

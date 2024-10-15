@@ -92,14 +92,18 @@ export default function SubwayDashboard() {
       // Actualizar el estado global de pasajeros
       setGlobalCount(data.totalLinea4A);
 
-      // Guardar datos en Firestore
-      saveStationData(selectedStation, currentDate.toISOString().split('T')[0], data.hora.toString(), {
-        passengers: data.totalLinea4A,
-        alarms: [] // Aquí puedes agregar la lógica para obtener las alarmas si las tienes
+      // Guardar datos en Firestore para todas las estaciones
+      data.estaciones.forEach((estacion: { nombre: string; pasajeros: number }) => {
+        saveStationData(estacion.nombre, currentDate.toISOString().split('T')[0], data.hora.toString(), {
+          passengers: estacion.pasajeros,
+          alarms: [] // Aquí puedes agregar la lógica para obtener las alarmas si las tienes
+        });
       });
+
+      // Guardar datos de la línea completa
       saveLineData("L4A", currentDate.toISOString().split('T')[0], data.hora.toString(), {
         totalPassengers: data.totalLinea4A,
-        alarms: [] // Aquí también puedes agregar la lógica para las alarmas
+        alarms: data.alertas // Guardamos todas las alertas de la línea
       });
 
       // Actualizar la fecha y hora actual
