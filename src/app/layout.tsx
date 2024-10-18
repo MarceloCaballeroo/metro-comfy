@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider"; // Verifica la ruta
+import { ToastProvider } from "@/components/ui/toast"
 import "./globals.css";
 import type { ReactNode } from "react";
 
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+           <ToastProvider>{children}</ToastProvider> 
           </ThemeProvider>
         </body>
       </html>

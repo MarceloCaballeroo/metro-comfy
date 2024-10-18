@@ -1,5 +1,6 @@
 "use client"
 
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from "react"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,38 +12,16 @@ import { useTheme } from "next-themes"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Toast, ToastProvider } from "@/components/ui/toast"
 import AuthForm from "./auth-form"
+=======
+import { useState } from "react"
+import AuthForm from "@/components/AuthForm"
+import DashboardLayout from "@/components/layout/DashboardLayout"
+>>>>>>> main
 
-interface StationData {
-  hour: number;
-  passengers: number;
-}
-
-interface StationsData {
-  [key: string]: StationData[];
-}
-
-interface Alert {
-  id: string;
-  message: string;
-  acknowledged: boolean;
-}
-
-export default function SubwayDashboard() {
-  const { theme, setTheme } = useTheme();
-  const [selectedStation, setSelectedStation] = useState("La Cisterna")
-  const [stationsData, setStationsData] = useState<StationsData>({})
-  const [lineData, setLineData] = useState<StationData[]>([])
-  const [alerts, setAlerts] = useState<Alert[]>([])
-  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
-  const [activeTab, setActiveTab] = useState("dashboard")
-  const [globalCount, setGlobalCount] = useState(0)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [showToast] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
+export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [wsError, setWsError] = useState<string | null>(null)
 
+<<<<<<< HEAD
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -131,15 +110,20 @@ export default function SubwayDashboard() {
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   }
+=======
+  const handleAuthSuccess = () => setIsAuthenticated(true)
+  const handleLogout = () => setIsAuthenticated(false)
+>>>>>>> main
 
   if (!isAuthenticated) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
         <AuthForm onAuthSuccess={handleAuthSuccess} />
       </div>
-    );
+    )
   }
 
+<<<<<<< HEAD
   return (
     <ToastProvider>
       <div className="flex flex-col min-h-screen">
@@ -383,4 +367,7 @@ export default function SubwayDashboard() {
       </div>
     </ToastProvider>
   )
+=======
+  return <DashboardLayout onLogout={handleLogout} />
+>>>>>>> main
 }

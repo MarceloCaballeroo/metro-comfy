@@ -37,6 +37,16 @@ Asegúrate de tener instalado lo siguiente en tu máquina:
 
 Para iniciar el servidor de desarrollo, ejecuta:
 
+```bash
+   npm run dev
+```
+
+Iniciar el test de datos en la raiz del proyecto
+
+```bash
+   node test.mjs
+```
+
 
 Abre tu navegador y visita [http://localhost:3000](http://localhost:3000) para ver la aplicación en acción.
 
