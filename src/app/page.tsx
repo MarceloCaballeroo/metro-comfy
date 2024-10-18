@@ -11,7 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Bell } from "lucide-react"
 import AuthForm from "./auth-form"
-import { saveStationData, saveLineData } from "@/lib/firestore"
+import { saveStationData, saveLineData } from "@/lib/model"
 
 // Types
 interface StationData {
@@ -69,34 +69,8 @@ export default function SubwayDashboard() {
   // Hooks
   const { theme, setTheme } = useTheme();
 
-  // WebSocket setup
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    wsRef.current = new WebSocket(WS_URL);
-
-    wsRef.current.onopen = () => console.log('Connected to WebSocket');
-
-    wsRef.current.onmessage = (event) => {
-      const data: WebSocketData = JSON.parse(event.data);
-      handleWebSocketMessage(data);
-    };
-
-    wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setWsError('Connection error. Please reload the page.');
-    };
-
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-
-    return () => {
-      if (wsRef.current) wsRef.current.close();
-      clearInterval(timer);
-    };
-  }, [isAuthenticated]);
-
   // WebSocket message handler
-  const handleWebSocketMessage = useCallback(( data: WebSocketData) => {
+  const handleWebSocketMessage = useCallback((data: WebSocketData) => {
     const currentDate = new Date(data.fecha);
 
     if (currentDate.getDate() !== lastDate.current.getDate()) {
@@ -137,15 +111,42 @@ export default function SubwayDashboard() {
     data.estaciones.forEach((estacion) => {
       saveStationData(estacion.nombre, dateStr, hourStr, {
         passengers: estacion.pasajeros,
-        alarms: [] // Asumimos que no tenemos alarmas específicas por estación en este momento
+        alarms: []
       });
     });
 
     saveLineData("L4A", dateStr, hourStr, {
       totalPassengers: data.totalLinea4A,
-      alarms: processedAlerts // Ahora usamos las alertas procesadas que coinciden con el tipo Alarm
+      alarms: processedAlerts
     });
   }, []);
+
+
+  // Effects
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    wsRef.current = new WebSocket(WS_URL);
+
+    wsRef.current.onopen = () => console.log('Connected to WebSocket');
+
+    wsRef.current.onmessage = (event) => {
+      const data: WebSocketData = JSON.parse(event.data);
+      handleWebSocketMessage(data);
+    };
+
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setWsError('Connection error. Please reload the page.');
+    };
+
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+      clearInterval(timer);
+    };
+  }, [isAuthenticated, handleWebSocketMessage]);
 
   // Handlers
   const handleStationChange = (value: string) => setSelectedStation(value);
