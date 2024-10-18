@@ -179,7 +179,7 @@ export default function SubwayDashboard() {
   const formatXAxis = (tickItem: number) => `${tickItem}:00`;
 
   // Render functions
-  const renderDashboard = () => (
+  const renderRealtime = () => (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
@@ -203,7 +203,11 @@ export default function SubwayDashboard() {
           </Card>
         ))}
       </div>
+    </div>
+  );
 
+  const renderDashboard = () => (
+    <div className="space-y-8">
       <div className="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
         <Button onClick={handleStartSimulation} disabled={isSimulationRunning}>
           Iniciar Simulación
@@ -392,6 +396,7 @@ export default function SubwayDashboard() {
           <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
             <h1 className="text-2xl font-bold mb-4 sm:mb-0">Metro Comfy</h1>
             <div className="flex flex-wrap justify-center sm:justify-end space-x-2 sm:space-x-4">
+              <Button variant="ghost" onClick={() => setActiveTab("realtime")}>Tiempo Real</Button>
               <Button variant="ghost" onClick={() => setActiveTab("dashboard")}>Dashboard</Button>
               <Button variant="ghost" onClick={() => setActiveTab("alerts")} className="relative">
                 Alertas
@@ -424,6 +429,7 @@ export default function SubwayDashboard() {
           </Card>
 
           {activeTab === "dashboard" && renderDashboard()}
+          {activeTab === "realtime" && renderRealtime()}
           {activeTab === "alerts" && renderAlerts()}
           {activeTab === "history" && renderHistory()}
           {activeTab === "settings" && renderSettings()}
