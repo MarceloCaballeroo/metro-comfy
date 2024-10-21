@@ -1,6 +1,4 @@
-"use client"
-
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef  } from "react"
 import { saveStationData, saveLineData } from "@/lib/model"
 
 const WS_URL = 'ws://localhost:8080'
@@ -43,7 +41,8 @@ export function useWebSocket() {
   const [lineData, setLineData] = useState<StationData[]>([])
   const [alerts, setAlerts] = useState<Alarm[]>([])
   const [globalCount, setGlobalCount] = useState(0)
-  const [isSimulationRunning] = useState(false)
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false)
+  const wsRef = useRef<WebSocket | null>(null)
 
   const handleWebSocketMessage = useCallback((data: WebSocketData) => {
     const currentDate = new Date(data.fecha)
@@ -95,17 +94,32 @@ export function useWebSocket() {
     })
   }, [])
 
+  const handleStartSimulation = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send('iniciar');
+      setIsSimulationRunning(true);
+      setLineData([]);
+    }
+  }, []);
+
+  const handleStopSimulation = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send('detener');
+      setIsSimulationRunning(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const ws = new WebSocket(WS_URL)
+    wsRef.current = new WebSocket(WS_URL)
 
-    ws.onopen = () => console.log('Connected to WebSocket')
+    wsRef.current.onopen = () => console.log('Connected to WebSocket')
 
-    ws.onmessage = (event) => {
+    wsRef.current.onmessage = (event) => {
       const data: WebSocketData = JSON.parse(event.data)
       handleWebSocketMessage(data)
     }
 
-    ws.onerror = (error) => {
+    wsRef.current.onerror = (error) => {
       console.error('WebSocket error:', error)
       setWsError('Connection error. Please reload the page.')
     }
@@ -113,7 +127,9 @@ export function useWebSocket() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
 
     return () => {
-      ws.close()
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
       clearInterval(timer)
     }
   }, [handleWebSocketMessage])
@@ -125,6 +141,8 @@ export function useWebSocket() {
     lineData,
     alerts,
     globalCount,
-    isSimulationRunning
+    isSimulationRunning,
+    handleStartSimulation,
+    handleStopSimulation
   }
 }

@@ -8,19 +8,19 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useWebSocket } from "@/hooks/use-websocket"
 
+const STATIONS = ["La Cisterna", "San Ramón", "Santa Rosa", "La Granja", "Santa Julia", "Vicuña Mackenna"];
+
 export default function DashboardPage() {
-  const { stationsData, lineData, isSimulationRunning } = useWebSocket()
+  const { 
+    stationsData, 
+    lineData, 
+    isSimulationRunning, 
+    handleStartSimulation, 
+    handleStopSimulation 
+  } = useWebSocket()
   const [selectedStation, setSelectedStation] = useState("La Cisterna")
 
-  const handleStationChange = (value: string) => setSelectedStation(value)
-
-  const handleStartSimulation = () => {
-    // Implementar la lógica para iniciar la simulación
-  }
-
-  const handleStopSimulation = () => {
-    // Implementar la lógica para detener la simulación
-  }
+  const handleStationChange = (value: string) => setSelectedStation(value);
 
   return (
     <div className="space-y-8">
@@ -44,7 +44,7 @@ export default function DashboardPage() {
                 <SelectValue placeholder="Seleccionar estación" />
               </SelectTrigger>
               <SelectContent>
-                {Object.keys(stationsData).map((station) => (
+                {STATIONS.map((station) => (
                   <SelectItem key={station} value={station}>
                     {station}
                   </SelectItem>
