@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
@@ -14,25 +13,13 @@ export default function DashboardPage() {
   const { 
     stationsData, 
     lineData, 
-    isSimulationRunning, 
-    handleStartSimulation, 
-    handleStopSimulation 
-  } = useWebSocket()
-  const [selectedStation, setSelectedStation] = useState("La Cisterna")
-
+  } = useWebSocket();
+  
+  const [selectedStation, setSelectedStation] = useState("La Cisterna");
   const handleStationChange = (value: string) => setSelectedStation(value);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
-        <Button onClick={handleStartSimulation} disabled={isSimulationRunning}>
-          Iniciar Simulación
-        </Button>
-        <Button onClick={handleStopSimulation} disabled={!isSimulationRunning}>
-          Detener Simulación
-        </Button>
-      </div>
-
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Tráfico por estación: {selectedStation}</CardTitle>

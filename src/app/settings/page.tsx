@@ -3,9 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
+// ... importar hooks de WebSocket si es necesario
+import { useWebSocket } from "@/hooks/use-websocket"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
+  const { handleStartSimulation, handleStopSimulation, isSimulationRunning } = useWebSocket(); // ... agregar el uso del WebSocket
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark")
 
@@ -27,6 +30,18 @@ export default function SettingsPage() {
             <Button variant="outline">
               Logout
             </Button>
+          </div>
+          {/* Botones de simulación */}
+          <div className="flex items-center justify-between">
+            <span>Simulación</span>
+            <div>
+              <Button onClick={handleStartSimulation} disabled={isSimulationRunning}>
+                Iniciar Simulación
+              </Button>
+              <Button onClick={handleStopSimulation} disabled={!isSimulationRunning}>
+                Detener Simulación
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
